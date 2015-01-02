@@ -4,9 +4,9 @@
 #include <QSemaphore>
 
 #define PRODUCER_DATA_SIZE 1000000000
-#define MAX_BUFFER_SIZE 2048
+#define MAX_BUFFER_SIZE 10000000 // MB
 
-extern char buffer[];
+extern qint16 buffer[];
 extern QSemaphore freeBytes;
 extern QSemaphore usedBytes;
 

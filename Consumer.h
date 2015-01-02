@@ -32,12 +32,12 @@ public:
         // Setup Audio Format
         qDebug() << "Setting up audio output...";
         QAudioFormat format;
-        format.setSampleRate(8000);
+        format.setSampleRate(48000);
         format.setChannelCount(1);
         format.setSampleSize(16);
         format.setCodec("audio/pcm");
         format.setByteOrder(QAudioFormat::LittleEndian);
-        format.setSampleType(QAudioFormat::UnSignedInt);
+        format.setSampleType(QAudioFormat::SignedInt);
 
 //        foreach (const QAudioDeviceInfo &deviceInfo,  QAudioDeviceInfo::availableDevices(QAudio::AudioOutput)) {
 //            qDebug() << "Audio Output Device name: " << deviceInfo.deviceName();
@@ -59,15 +59,15 @@ public:
 
         int counter = 0;
         QByteArray capturedData;
-        while ( counter < 80000 ) {
+        while ( counter < 2048000 ) {
             usedBytes.acquire();
-            char data = buffer[counter % MAX_BUFFER_SIZE];
-            if ( data > 0 ) {
-                //qDebug() << "Write: " << data << " Count: " << counter;
-            }
-            ///outputBuffer.write((const char *)&data,1);
-            ///capturedData.append(0xff);
-            capturedData.append(data);
+            qint16 data = buffer[counter % MAX_BUFFER_SIZE];
+            char upper = ( data & 0xFF00 ) >> 8;
+            char lower = ( data & 0x00FF );
+            //qDebug() << "Upper: " << (int)upper << " Count: " << counter;
+            //qDebug() << "Lower: " << (int)lower << " Count: " << counter;
+            capturedData.append(upper);
+            capturedData.append(lower);
             freeBytes.release();
             counter++;
         }
@@ -76,6 +76,7 @@ public:
         qDebug() << "Copy Buffer";
 
         outputBuffer.setBuffer(&capturedData);
+
         qDebug() << "Opening audio output buffer: " << outputBuffer.open( QIODevice::ReadOnly );
 
         qDebug() << "Start Playing";

@@ -26,12 +26,12 @@ void AudioRecorder::startRecording()
 
     // Setup Audio Format
     QAudioFormat format;
-    format.setSampleRate(8000);
+    format.setSampleRate(48000);
     format.setChannelCount(1);
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::UnSignedInt);
+    format.setSampleType(QAudioFormat::SignedInt);
 
 //    foreach (const QAudioDeviceInfo &deviceInfo,  QAudioDeviceInfo::availableDevices(QAudio::AudioOutput)) {
 //        qDebug() << "Audio Output Device name: " << deviceInfo.deviceName();
@@ -56,28 +56,31 @@ void AudioRecorder::startRecording()
 void AudioRecorder::measureAudioBytes()
 {
 
-    qDebug() << "QBuffer Has this many bytes: " << m_AudioData->size();
+//    qDebug() << "QBuffer Has this many bytes: " << m_AudioData->size();
 
     // Take the data from the internal QBuffer QBytearray
     QByteArray dataToWrite = m_AudioData->buffer();
     //qDebug() << "QByteArray Has this many bytes: " << dataToWrite.size();
 
+    const char *data = dataToWrite.constData();
+    const qint16 *data16 = reinterpret_cast<const qint16 *>(data);
+
     // Push data into audio buffer
-    char readByte;
-    for (int i = 0; i < dataToWrite.size(); ++i) {
+    qint16 readSample;
+    for (int i = 0 ; i < (dataToWrite.size() / 2.0) ; ++i) {
+
         int subscript = i % MAX_BUFFER_SIZE;
-        readByte = dataToWrite.at(i);
-//        if ( readByte > 0 ) {
-//            qDebug() << "Write: " << readByte;
-//        }
-        //fprintf(stderr, "Write: %c\n", buffer[i % MAX_BUFFER_SIZE]);
+        readSample = data16[i];
+
         freeBytes.acquire();
-        buffer[subscript] = readByte;
+        buffer[subscript] = readSample;
         usedBytes.release();
+
     }
 
     // Cleanout the buffer
-    m_AudioData->buffer().remove(0,m_AudioData->size());
+    //m_AudioData->buffer().remove(0,m_AudioData->size());
+    m_AudioData->buffer().clear();
 
     //qDebug() << "Cleaned QBuffer Has this many bytes: " << m_AudioData->size();
 
